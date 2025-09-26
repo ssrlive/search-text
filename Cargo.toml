@@ -2,6 +2,11 @@
 name = "search-text"
 version = "0.1.0"
 edition = "2024"
+authors = ["ssrlive"]
+description = "A fast and flexible command-line tool to recursively search for text or regex patterns in files under a directory."
+license = "MIT"
+repository = "https://github.com/ssrlive/search-text"
+homepage = "https://crates.io/crates/search-text"
 
 [dependencies]
 clap = { version = "4.5.48", features = ["derive", "cargo"] }

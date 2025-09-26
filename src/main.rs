@@ -12,11 +12,11 @@ struct Args {
     #[arg(short = 'p', long = "pattern")]
     pattern: String,
 
-    /// Directory to search, e.g. ./src
+    /// Directory to search, e.g. ./src. If not specified, use current working directory.
     #[arg(short = 'd', long = "dir")]
-    dir: String,
+    dir: Option<String>,
 
-    /// Use regex pattern matching
+    /// Whether to use regex pattern matching
     #[arg(short = 'r', long = "regex", default_value_t = false)]
     regex: bool,
 
@@ -42,7 +42,11 @@ async fn main() {
             .filter(|x| !x.is_empty())
             .collect()
     });
-    for entry in walkdir::WalkDir::new(&args.dir)
+    let search_dir = match &args.dir {
+        Some(d) => std::path::PathBuf::from(d),
+        None => std::env::current_dir().expect("Failed to get current directory"),
+    };
+    for entry in walkdir::WalkDir::new(&search_dir)
         .into_iter()
         .filter_map(|e| e.ok())
     {
