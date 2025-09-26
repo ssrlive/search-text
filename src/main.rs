@@ -19,6 +19,10 @@ struct Args {
     /// Use regex pattern matching
     #[arg(short = 'r', long = "regex", default_value_t = false)]
     regex: bool,
+
+    /// File extensions to filter, e.g. txt,rs (comma separated, no dot)
+    #[arg(short = 'e', long = "ext")]
+    ext: Option<String>,
 }
 
 #[tokio::main]
@@ -32,12 +36,30 @@ async fn main() {
     } else {
         None
     };
+    let exts: Option<Vec<String>> = args.ext.as_ref().map(|s| {
+        s.split(',')
+            .map(|x| x.trim().to_lowercase())
+            .filter(|x| !x.is_empty())
+            .collect()
+    });
     for entry in walkdir::WalkDir::new(&args.dir)
         .into_iter()
         .filter_map(|e| e.ok())
     {
         if entry.file_type().is_file() {
             let path = entry.path().to_owned();
+            // Extension filter
+            let allowed = if let Some(ref exts) = exts {
+                match path.extension().and_then(|s| s.to_str()) {
+                    Some(ext) => exts.iter().any(|e| e == &ext.to_lowercase()),
+                    None => false,
+                }
+            } else {
+                true
+            };
+            if !allowed {
+                continue;
+            }
             let pattern = pattern.clone();
             let regex = regex.clone();
             let handle = tokio::spawn(async move {
