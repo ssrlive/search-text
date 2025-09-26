@@ -25,14 +25,16 @@ struct Args {
     ext: Option<String>,
 }
 
+pub type BoxedError = Box<dyn std::error::Error + Send + Sync + 'static>;
+
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), BoxedError> {
     let args = <Args as clap::Parser>::parse();
     let mut handles = vec![];
     let use_regex = args.regex;
     let pattern = args.pattern.clone();
     let regex = if use_regex {
-        Some(regex::Regex::new(&pattern).expect("Invalid regex pattern"))
+        Some(regex::Regex::new(&pattern)?)
     } else {
         None
     };
@@ -44,7 +46,7 @@ async fn main() {
     });
     let search_dir = match &args.dir {
         Some(d) => std::path::PathBuf::from(d),
-        None => std::env::current_dir().expect("Failed to get current directory"),
+        None => std::env::current_dir()?,
     };
     for entry in walkdir::WalkDir::new(&search_dir)
         .into_iter()
@@ -86,4 +88,5 @@ async fn main() {
     for handle in handles {
         let _ = handle.await;
     }
+    Ok(())
 }
